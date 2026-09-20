@@ -1,0 +1,189 @@
+<?php
+
+/**
+ * The role editor, as a fragment a host drops into a page of its own.
+ *
+ * It asks the package for everything it shows, so embedding it is one line and
+ * a host cannot feed it a stale list by accident. What it does take is where to
+ * come back to, because only the host knows that.
+ *
+ * @var string|null $return  where a non-JavaScript submit should land
+ * @var bool|null   $canEdit whether to render the forms at all
+ */
+
+use Naf\Rbac\Definition\PermissionDefinition;
+
+use function Naf\Auth\auth;
+use function Naf\Form\csrf;
+use function Naf\I18n\t;
+use function Naf\Rbac\rbac;
+use function Naf\route;
+use function Naf\View\s;
+
+$rbac   = rbac();
+$roles  = $rbac->roles->all();
+$groups = $rbac->permissions->grouped();
+$token  = csrf()->token();
+$return ??= '/';
+
+$actor = (int) (auth()->user()?->getIdentifier() ?? 0);
+$mine  = $rbac->permissionsOf($actor);
+$canEdit ??= in_array('rbac.manage', $mine, true);
+
+/** Permissions a role carries that no installed package declares any more. */
+$orphansOf = static function (array $role) use ($rbac): array {
+    return array_values(array_filter(
+        $role['permissions'],
+        static fn(string $name) => !$rbac->permissions->knows($name),
+    ));
+};
+?>
+<div class="rbac-roles">
+    <?php if (!$canEdit): ?>
+        <p class="rbac-note"><?= s(t('Du kannst Rollen sehen, aber nicht ändern.')) ?></p>
+    <?php endif ?>
+
+    <?php foreach ($roles as $role): ?>
+        <?php
+        $orphans = $orphansOf($role);
+        $beyond  = array_diff($role['permissions'], $mine);
+        $locked  = !$canEdit || $beyond !== [];
+        ?>
+        <details class="rbac-role">
+            <summary class="rbac-role-head">
+                <span class="rbac-role-name"><?= s($role['label']) ?></span>
+                <span class="rbac-role-marks">
+                    <?php if ($role['system']): ?>
+                        <span class="rbac-mark"><?= s(t('mitgeliefert')) ?></span>
+                    <?php endif ?>
+                    <span class="rbac-mark">
+                        <?= s(t(':count Rechte', ['count' => count($role['permissions'])])) ?>
+                    </span>
+                    <span class="rbac-mark">
+                        <?= s(t(':count Personen', ['count' => $role['holders']])) ?>
+                    </span>
+                </span>
+            </summary>
+
+            <form class="rbac-form" method="post" data-enhanced action="<?= s(route('rbac.roles.save')) ?>">
+                <input type="hidden" name="_csrf" value="<?= s($token) ?>" />
+                <input type="hidden" name="return" value="<?= s($return) ?>" />
+                <input type="hidden" name="id" value="<?= (int) $role['id'] ?>" />
+                <?php if ($beyond !== []): ?>
+                    <?php /* Outside the fieldset: a disabled one is dimmed by the
+                            browser and skipped by some assistive technology, and
+                            the reason a form is locked is the one thing in it
+                            that has to stay readable. */ ?>
+                    <p class="rbac-note rbac-note-reason">
+                        <?= s(t(
+                            'Diese Rolle trägt Rechte, die du selbst nicht hast. Du kannst sie '
+                            . 'deshalb nicht bearbeiten.',
+                        )) ?>
+                    </p>
+                <?php endif ?>
+                <fieldset <?= $locked ? 'disabled' : '' ?>>
+                    <label class="rbac-field">
+                        <span><?= s(t('Name')) ?></span>
+                        <input name="label" required maxlength="120" value="<?= s($role['label']) ?>" />
+                    </label>
+                    <label class="rbac-field">
+                        <span><?= s(t('Wofür ist diese Rolle da?')) ?></span>
+                        <input name="description" maxlength="255" value="<?= s($role['description']) ?>" />
+                    </label>
+
+                    <?php foreach ($groups as $group => $permissions): ?>
+                        <fieldset class="rbac-group">
+                            <legend><?= s(t($group)) ?></legend>
+                            <?php foreach ($permissions as $name => $permission): ?>
+                                <?php /** @var PermissionDefinition $permission */ ?>
+                                <label class="rbac-permission" title="<?= s(t($permission->getDescription())) ?>">
+                                    <input
+                                        type="checkbox"
+                                        name="permissions[]"
+                                        value="<?= s($name) ?>"
+                                        <?= in_array($name, $role['permissions'], true) ? 'checked' : '' ?>
+                                        <?= in_array($name, $mine, true) ? '' : 'disabled' ?>
+                                    />
+                                    <span><?= s(t($permission->getLabel())) ?></span>
+                                </label>
+                            <?php endforeach ?>
+                        </fieldset>
+                    <?php endforeach ?>
+
+                    <?php if ($orphans !== []): ?>
+                        <p class="rbac-note">
+                            <?= s(t(
+                                'Diese Rolle hält :count Recht(e), die gerade kein installiertes Paket '
+                                . 'anbietet. Sie bleiben gespeichert und wirken wieder, sobald das Paket '
+                                . 'zurück ist.',
+                                ['count' => count($orphans)],
+                            )) ?>
+                            <?php foreach ($orphans as $orphan): ?>
+                                <input type="hidden" name="permissions[]" value="<?= s($orphan) ?>" />
+                            <?php endforeach ?>
+                        </p>
+                    <?php endif ?>
+
+                    <div class="rbac-actions">
+                        <button class="rbac-button is-primary"><?= s(t('Rolle speichern')) ?></button>
+                    </div>
+                </fieldset>
+            </form>
+
+            <?php if ($canEdit && !$role['system'] && $beyond === []): ?>
+                <form
+                    class="rbac-form is-danger"
+                    method="post"
+                    data-enhanced
+                    action="<?= s(route('rbac.roles.delete')) ?>"
+                >
+                    <input type="hidden" name="_csrf" value="<?= s($token) ?>" />
+                    <input type="hidden" name="return" value="<?= s($return) ?>" />
+                    <input type="hidden" name="id" value="<?= (int) $role['id'] ?>" />
+                    <button class="rbac-button is-danger" formnovalidate>
+                        <?= s(t('Rolle löschen')) ?>
+                    </button>
+                </form>
+            <?php endif ?>
+        </details>
+    <?php endforeach ?>
+
+    <?php if ($canEdit): ?>
+        <details class="rbac-role is-new">
+            <summary class="rbac-role-head">
+                <span class="rbac-role-name"><?= s(t('Neue Rolle')) ?></span>
+            </summary>
+            <form class="rbac-form" method="post" data-enhanced action="<?= s(route('rbac.roles.save')) ?>">
+                <input type="hidden" name="_csrf" value="<?= s($token) ?>" />
+                <input type="hidden" name="return" value="<?= s($return) ?>" />
+                <label class="rbac-field">
+                    <span><?= s(t('Name')) ?></span>
+                    <input name="label" required maxlength="120" placeholder="<?= s(t('Zum Beispiel: Redaktion')) ?>" />
+                </label>
+                <label class="rbac-field">
+                    <span><?= s(t('Wofür ist diese Rolle da?')) ?></span>
+                    <input name="description" maxlength="255" />
+                </label>
+                <?php foreach ($groups as $group => $permissions): ?>
+                    <fieldset class="rbac-group">
+                        <legend><?= s(t($group)) ?></legend>
+                        <?php foreach ($permissions as $name => $permission): ?>
+                            <label class="rbac-permission" title="<?= s(t($permission->getDescription())) ?>">
+                                <input
+                                    type="checkbox"
+                                    name="permissions[]"
+                                    value="<?= s($name) ?>"
+                                    <?= in_array($name, $mine, true) ? '' : 'disabled' ?>
+                                />
+                                <span><?= s(t($permission->getLabel())) ?></span>
+                            </label>
+                        <?php endforeach ?>
+                    </fieldset>
+                <?php endforeach ?>
+                <div class="rbac-actions">
+                    <button class="rbac-button is-primary"><?= s(t('Rolle anlegen')) ?></button>
+                </div>
+            </form>
+        </details>
+    <?php endif ?>
+</div>

@@ -1,0 +1,192 @@
+/*
+ * Enough styling to be presentable anywhere, and nothing that fights a host.
+ *
+ * Every colour and radius comes from a custom property with a neutral default,
+ * so an application maps it to its own tokens in one block and the editor looks
+ * like it was written for that application:
+ *
+ *   .rbac-roles { --rbac-line: var(--line); --rbac-accent: var(--accent); }
+ *
+ * Nothing here sets a font or a page background: those belong to whoever owns
+ * the page.
+ */
+.rbac-roles,
+.rbac-grants {
+  --rbac-line: #d7d7e1;
+  --rbac-muted: #6a6a7d;
+  --rbac-accent: #6366f1;
+  --rbac-danger: #e05260;
+  --rbac-surface: transparent;
+  --rbac-radius: 10px;
+}
+.rbac-role {
+  border-bottom: 1px solid var(--rbac-line);
+}
+.rbac-role-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 13px 4px;
+  cursor: pointer;
+  list-style: none;
+}
+.rbac-role-head::-webkit-details-marker {
+  display: none;
+}
+.rbac-role-name {
+  font-weight: 500;
+}
+.rbac-role.is-new .rbac-role-name {
+  color: var(--rbac-accent);
+}
+.rbac-role-marks {
+  display: flex;
+  gap: 6px;
+  margin-left: auto;
+}
+.rbac-mark {
+  padding: 3px 9px;
+  border: 1px solid var(--rbac-line);
+  border-radius: 999px;
+  color: var(--rbac-muted);
+  font-size: 10px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.rbac-form {
+  padding: 4px 4px 20px;
+}
+.rbac-form fieldset {
+  border: 0;
+  padding: 0;
+  margin: 0;
+  min-width: 0;
+}
+.rbac-field {
+  display: block;
+  margin: 0 0 14px;
+  font-size: 11px;
+}
+.rbac-field span {
+  display: block;
+  margin-bottom: 6px;
+  color: var(--rbac-muted);
+}
+.rbac-field input {
+  width: 100%;
+  padding: 9px 11px;
+  border: 1px solid var(--rbac-line);
+  border-radius: 7px;
+  background: var(--rbac-surface);
+  color: inherit;
+  font: inherit;
+  font-size: 13px;
+}
+.rbac-group {
+  margin: 0 0 16px;
+}
+.rbac-group legend {
+  padding: 0;
+  margin-bottom: 8px;
+  color: var(--rbac-muted);
+  font-size: 11px;
+  letter-spacing: 0.03em;
+}
+.rbac-group {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  gap: 8px;
+}
+.rbac-group legend {
+  grid-column: 1 / -1;
+}
+.rbac-permission {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 11px 13px;
+  border: 1px solid var(--rbac-line);
+  border-radius: var(--rbac-radius);
+  font-size: 12px;
+  line-height: 1.4;
+}
+.rbac-permission input {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+  accent-color: var(--rbac-accent);
+}
+.rbac-permission:has(input:disabled) {
+  opacity: 0.45;
+}
+.rbac-note {
+  margin: 0 0 14px;
+  padding: 11px 14px;
+  border-radius: var(--rbac-radius);
+  background: color-mix(in srgb, var(--rbac-accent) 8%, transparent);
+  color: var(--rbac-muted);
+  font-size: 12px;
+  line-height: 1.6;
+}
+/*
+ * A note that says why something is locked, rather than one that adds an aside.
+ * It reads at full strength: muted grey on a faint tint is how this editor marks
+ * text you may skip, and this is the one line you may not.
+ */
+.rbac-note-reason {
+  color: inherit;
+  background: color-mix(in srgb, var(--rbac-accent) 16%, transparent);
+  border-left: 3px solid var(--rbac-accent);
+  font-size: 13px;
+}
+.rbac-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 6px;
+}
+.rbac-button {
+  padding: 8px 15px;
+  border: 1px solid var(--rbac-line);
+  border-radius: 8px;
+  background: var(--rbac-surface);
+  color: inherit;
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+}
+.rbac-button.is-primary {
+  border-color: transparent;
+  background: var(--rbac-accent);
+  color: #fff;
+}
+.rbac-button.is-danger {
+  border-color: transparent;
+  background: transparent;
+  color: var(--rbac-danger);
+}
+.rbac-form.is-danger {
+  padding-top: 0;
+}
+
+/* The per-person editor: one block per kind of place, one row per place. */
+.rbac-grants fieldset {
+  border: 0;
+  padding: 0;
+  margin: 0;
+  min-width: 0;
+}
+.rbac-place {
+  margin-bottom: 22px;
+}
+.rbac-place h4 {
+  margin: 0 0 4px;
+  color: var(--rbac-muted);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.rbac-grants .rbac-group {
+  padding: 4px 4px 18px;
+}

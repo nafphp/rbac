@@ -1,0 +1,114 @@
+<?php
+
+/**
+ * What one person holds, everywhere, as a fragment a host drops into its own
+ * user screen.
+ *
+ * The host owns people -- who exists, what they are called, whether they are
+ * active. It passes one of them in; this renders the places and the roles that
+ * mean something in each, and submits all of it at once.
+ *
+ * The places come from whatever ScopeSources are registered, so a host that
+ * adds teams or tenants gets another block here without touching this file.
+ *
+ * @var int         $user   whose grants these are
+ * @var string      $name   shown in the heading, so the host keeps its own spelling
+ * @var string|null $return where a non-JavaScript submit should land
+ */
+
+use Naf\Rbac\Scope;
+
+use function Naf\Auth\auth;
+use function Naf\Form\csrf;
+use function Naf\I18n\t;
+use function Naf\Rbac\rbac;
+use function Naf\route;
+use function Naf\View\s;
+
+$rbac  = rbac();
+$roles = $rbac->roles->all();
+$return ??= '/';
+
+$actor  = (int) (auth()->user()?->getIdentifier() ?? 0);
+$isSelf = $actor === $user;
+$held   = [];
+foreach ($rbac->assignments->grantsOf($user) as $grant) {
+    $held[$grant['scope']][$grant['role_id']] = true;
+}
+
+/** The places to offer, as heading => (scope string => label). */
+$places = ['' => ['' => t('Für die ganze Installation')]];
+foreach ($rbac->declared->scopes() as $type => $source) {
+    $offered = [(string) Scope::allOf($type) => t('Auf allen')];
+    foreach ($source->instances() as $id => $label) {
+        $offered[(string) Scope::of($type, $id)] = $label;
+    }
+    $places[$type] = $offered;
+}
+
+/** @return list<array<string,mixed>> the roles that may be granted at a scope type */
+$rolesFor = static fn(string $type): array
+    => array_values(array_filter($roles, static fn(array $role) => $role['scopeType'] === $type));
+?>
+<form class="rbac-grants" method="post" data-enhanced action="<?= s(route('rbac.grants.save')) ?>">
+    <input type="hidden" name="_csrf" value="<?= s(csrf()->token()) ?>" />
+    <input type="hidden" name="return" value="<?= s($return) ?>" />
+    <input type="hidden" name="user" value="<?= (int) $user ?>" />
+
+    <?php if ($isSelf): ?>
+        <p class="rbac-note">
+            <?= s(t('Deine eigenen Rollen kannst du nicht ändern. Das muss jemand anderes tun.')) ?>
+        </p>
+    <?php endif ?>
+
+    <fieldset <?= $isSelf ? 'disabled' : '' ?>>
+        <?php foreach ($places as $type => $offered): ?>
+            <?php $available = $rolesFor((string) $type); ?>
+            <?php if ($available === []): ?>
+                <?php continue ?>
+            <?php endif ?>
+
+            <section class="rbac-place">
+                <h4>
+                    <?= s($type === '' ? t('Installation') : t($rbac->declared->scopeSource((string) $type)?->label() ?? $type)) ?>
+                </h4>
+
+                <?php foreach ($offered as $scope => $label): ?>
+                    <details class="rbac-role" <?= isset($held[$scope]) ? 'open' : '' ?>>
+                        <summary class="rbac-role-head">
+                            <span class="rbac-role-name"><?= s($label) ?></span>
+                            <span class="rbac-role-marks">
+                                <?php foreach ($available as $role): ?>
+                                    <?php if (isset($held[$scope][$role['id']])): ?>
+                                        <span class="rbac-mark"><?= s($role['label']) ?></span>
+                                    <?php endif ?>
+                                <?php endforeach ?>
+                            </span>
+                        </summary>
+                        <div class="rbac-group">
+                            <?php foreach ($available as $role): ?>
+                                <label class="rbac-permission" title="<?= s($role['description']) ?>">
+                                    <input
+                                        type="checkbox"
+                                        name="grants[]"
+                                        value="<?= (int) $role['id'] ?>|<?= s((string) $scope) ?>"
+                                        <?= isset($held[$scope][$role['id']]) ? 'checked' : '' ?>
+                                    />
+                                    <span><?= s($role['label']) ?></span>
+                                </label>
+                            <?php endforeach ?>
+                        </div>
+                    </details>
+                <?php endforeach ?>
+            </section>
+        <?php endforeach ?>
+
+        <?php if (!$isSelf): ?>
+            <div class="rbac-actions">
+                <button class="rbac-button is-primary">
+                    <?= s(t('Rollen von :name speichern', ['name' => $name])) ?>
+                </button>
+            </div>
+        <?php endif ?>
+    </fieldset>
+</form>
