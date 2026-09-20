@@ -9,6 +9,7 @@ use Naf\Rbac\Service\GrantWriter;
 use Psr\Http\Message\ResponseInterface;
 
 use function Naf\Auth\auth;
+use function Naf\event;
 use function Naf\json;
 use function Naf\redirect;
 use function Naf\request;
@@ -40,7 +41,19 @@ final readonly class GrantController
         }
 
         try {
-            $this->writer->apply($this->actorId(), $target, $this->grantsIn($body));
+            /*
+             * Announced here and not in the writer: a service that reaches for an
+             * event dispatcher needs a booted application to be used at all, and
+             * this package's services are meant to be usable without one. A
+             * controller already has the application; this is where the two meet.
+             *
+             * A host that keeps a history listens for this. One that does not is
+             * unaffected -- rbac keeps none of its own, because a history is a
+             * product decision and access control is not.
+             */
+            foreach ($this->writer->apply($this->actorId(), $target, $this->grantsIn($body)) as $moved) {
+                event()->dispatch('rbac.granted', $moved);
+            }
         } catch (PrivilegedActionDenied $denied) {
             return $wantsJson
                 ? json(['message' => $denied->getMessage(), 'reason' => $denied->reason], 403)
