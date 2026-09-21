@@ -50,9 +50,14 @@ final readonly class GrantController
              * A host that keeps a history listens for this. One that does not is
              * unaffected -- rbac keeps none of its own, because a history is a
              * product decision and access control is not.
+             *
+             * Dispatched as the object rather than under a name: `GrantsChanged`
+             * already says what this is, and a host listening for
+             * `GrantsChanged::class` cannot misspell it into a listener that
+             * never runs and never says so.
              */
             foreach ($this->writer->apply($this->actorId(), $target, $this->grantsIn($body)) as $moved) {
-                event()->dispatch('rbac.granted', $moved);
+                event()->dispatch($moved);
             }
         } catch (PrivilegedActionDenied $denied) {
             return $wantsJson
