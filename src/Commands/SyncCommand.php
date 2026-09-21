@@ -60,6 +60,24 @@ final class SyncCommand extends AbstractCommand
                 . 'installation had changed about them is gone.',
                 'warning',
             );
+
+            return self::SUCCESS;
+        }
+
+        foreach ($rbac->roles->declaredDrift($declared, $rbac->declared) as $role => $missing) {
+            $output->writeLine(sprintf('  %s is missing %s', $role, implode(', ', $missing)), 'warning');
+            $drifted = true;
+        }
+
+        if ($drifted ?? false) {
+            $output->writeLine(
+                'The roles above no longer carry everything their packages declare. That is kept on '
+                . 'purpose, in case this installation meant it -- but a permission added by an '
+                . 'upgrade reaches nobody this way, and the feature behind it will look broken. '
+                . 'Grant it in the role editor, or run this command with --reapply to take the '
+                . "packages' word for all of them.",
+                'warning',
+            );
         }
 
         return self::SUCCESS;

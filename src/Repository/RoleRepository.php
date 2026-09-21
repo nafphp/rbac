@@ -162,6 +162,47 @@ final readonly class RoleRepository
         }
     }
 
+    /**
+     * Declared roles that no longer carry everything their declaration names
+     *
+     * Leaving a stored role alone is the right default: an installation that
+     * took a permission away from its own editor role meant it, and an upgrade
+     * must not hand it back. The price is silent -- a permission declared after
+     * the roles were written reaches nobody, so the feature behind it is dead
+     * and the only symptom is a button that does nothing.
+     *
+     * This answers that, and answers nothing else: which of the two sides is
+     * right is a decision, and the installation is the one entitled to make it.
+     *
+     * Only declared roles are compared, and each only against its own
+     * declaration. A permission that no role carries at all is ordinary --
+     * packages ship permissions meant for roles an installation builds itself --
+     * and counting those would bury this.
+     *
+     * @param array<string, RoleInterface> $definitions Declared roles by key
+     * @param RoleRegistry                 $registry    Resolves a definition's permission names
+     *
+     * @return array<string, list<string>> Role name to the permissions it is missing
+     */
+    public function declaredDrift(array $definitions, RoleRegistry $registry): array
+    {
+        $held  = array_column($this->all(), 'permissions', 'name');
+        $drift = [];
+
+        foreach ($definitions as $key => $definition) {
+            if (!array_key_exists($key, $held)) {
+                continue;
+            }
+
+            $missing = array_values(array_diff($registry->permissionsOf($definition), $held[$key]));
+            if ($missing !== []) {
+                $drift[$key] = $missing;
+            }
+        }
+
+        return $drift;
+    }
+
     /** @param list<string> $permissions */
     private function setPermissions(int $id, array $permissions): void
     {
