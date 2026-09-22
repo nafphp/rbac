@@ -36,5 +36,14 @@
         "psr-4": {
             "Tests\\": "tests/"
         }
+    },
+    "extra": {
+        "naf": {
+            "boot": {
+                "after": [
+                    "naf/cli"
+                ]
+            }
+        }
     }
 }
