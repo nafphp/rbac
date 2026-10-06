@@ -31,6 +31,9 @@ final class M202609200001Rbac extends AbstractMigration
             default  => 'BIGSERIAL PRIMARY KEY',
         };
 
+        // SYSTEM is reserved on MySQL. Keep the stored column and public keys.
+        $system = $connection->getAttribute(PDO::ATTR_DRIVER_NAME) === 'mysql' ? '`system`' : '"system"';
+
         $tables = [
             // `system` marks the roles a host declares in code. They may gain and
             // lose permissions, but they cannot be renamed away or deleted, so
@@ -46,7 +49,7 @@ final class M202609200001Rbac extends AbstractMigration
                 . 'scope_type VARCHAR(40) NOT NULL DEFAULT \'\','
                 . 'label VARCHAR(120) NOT NULL,'
                 . 'description VARCHAR(255) NOT NULL DEFAULT \'\','
-                . 'system SMALLINT NOT NULL DEFAULT 0,'
+                . $system . ' SMALLINT NOT NULL DEFAULT 0,'
                 . 'position BIGINT NOT NULL DEFAULT 100,'
                 . 'version BIGINT NOT NULL DEFAULT 1,'
                 . 'created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP',
