@@ -12,6 +12,18 @@ permissions:
 jobs:
   build:
     runs-on: ubuntu-latest
+    services:
+      mysql:
+        image: mysql:8.4
+        env:
+          MYSQL_DATABASE: nafinity_rbac_test
+          MYSQL_USER: board
+          MYSQL_PASSWORD: board
+          MYSQL_ROOT_PASSWORD: root-test-only
+        ports: ['3306:3306']
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 --silent"
+          --health-interval=5s --health-timeout=5s --health-retries=20
 
     steps:
     - uses: actions/checkout@v7
@@ -36,6 +48,9 @@ jobs:
     - name: Run test suite
       env:
         NAF_HOST: ${{ github.workspace }}
+        NAF_RBAC_MYSQL_DSN: mysql:host=127.0.0.1;port=3306;dbname=nafinity_rbac_test
+        NAF_RBAC_MYSQL_USER: board
+        NAF_RBAC_MYSQL_PASSWORD: board
       run: composer run-script test
 
     - name: Check code style

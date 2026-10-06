@@ -70,7 +70,8 @@ They need no host application, only `naf/database` for the migration base class:
 NAF_HOST=/path/to/an/installation vendor/bin/phpunit
 ```
 
-Everything runs against SQLite in memory. That is also why the migration knows
+Policy tests run against SQLite in memory. The optional integration test runs the
+migration and role writes against MySQL 8.4; CI supplies its isolated server. That is also why the migration knows
 three drivers and not two — a package does not get to assume the host's database.
 
 ## Telling the host what moved
@@ -102,7 +103,7 @@ defaults, so a host maps it to its own tokens without overriding rules.
 ## Verify
 
 ```sh
-NAF_HOST=$PWD composer test   # 49 tests, SQLite in memory
+NAF_HOST=$PWD composer test   # SQLite policy tests; MySQL integration when configured
 composer style:check          # composer style:fix applies it
 composer validate --strict
 ```
@@ -122,3 +123,7 @@ signatures and template output.
 plugin during bootstrap. With the automatic-order framework, installed targets boot
 first; absent optional targets remain absent. Keep Composer installation requirements
 separate from boot order. No host `plugins.php` entry is needed.
+
+For MySQL acceptance, set `NAF_RBAC_MYSQL_DSN`, `NAF_RBAC_MYSQL_USER` and
+`NAF_RBAC_MYSQL_PASSWORD`. The integration test refuses any schema other than
+`nafinity_rbac_test` and removes its tables after the run.

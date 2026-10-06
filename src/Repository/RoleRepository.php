@@ -18,8 +18,11 @@ use PDO;
  */
 final readonly class RoleRepository
 {
+    private string $systemColumn;
+
     public function __construct(private PDO $connection)
     {
+        $this->systemColumn = $connection->getAttribute(PDO::ATTR_DRIVER_NAME) === 'mysql' ? '`system`' : '"system"';
     }
 
     /** @return list<array{id:int,name:string,label:string,description:string,scopeType:string,system:bool,position:int,version:int,permissions:list<string>,holders:int}> */
@@ -89,7 +92,7 @@ final readonly class RoleRepository
     ): int {
         $this->connection
             ->prepare(
-                'INSERT INTO rbac_roles(name,scope_type,label,description,system,position)'
+                'INSERT INTO rbac_roles(name,scope_type,label,description,' . $this->systemColumn . ',position)'
                 . ' VALUES(?,?,?,?,?,?)',
             )
             ->execute([$name, $scopeType, $label, $description, $system ? 1 : 0, $position]);
@@ -114,7 +117,7 @@ final readonly class RoleRepository
 
     public function delete(int $id): void
     {
-        $this->connection->prepare('DELETE FROM rbac_roles WHERE id = ? AND system = 0')->execute([$id]);
+        $this->connection->prepare('DELETE FROM rbac_roles WHERE id = ? AND ' . $this->systemColumn . ' = 0')->execute([$id]);
     }
 
     /**
@@ -153,7 +156,7 @@ final readonly class RoleRepository
 
             // Declared roles stay declared, so the rules may keep naming them.
             $this->connection
-                ->prepare('UPDATE rbac_roles SET system = 1 WHERE id = ?')
+                ->prepare('UPDATE rbac_roles SET ' . $this->systemColumn . ' = 1 WHERE id = ?')
                 ->execute([$id]);
 
             if ($reapply) {

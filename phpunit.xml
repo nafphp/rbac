@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <phpunit bootstrap="tests/bootstrap.php" colors="true" failOnRisky="true" failOnWarning="true"
          failOnDeprecation="true" cacheResult="false">
-    <testsuites><testsuite name="NAF RBAC"><directory>tests/Unit</directory></testsuite></testsuites>
+    <testsuites><testsuite name="NAF RBAC"><directory>tests/Unit</directory><directory>tests/Integration</directory></testsuite></testsuites>
     <source><include><directory>src</directory></include></source>
 </phpunit>
