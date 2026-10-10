@@ -30,10 +30,34 @@
   cursor: pointer;
   list-style: none;
 }
+.rbac-role-caret {
+  flex: none;
+  width: 8px;
+  height: 8px;
+  margin-left: auto;
+  color: var(--rbac-muted);
+  transform: rotate(-45deg);
+  transition: transform 0.18s;
+}
+.rbac-role-caret::before {
+  content: "";
+  display: block;
+  box-sizing: border-box;
+  width: 100%;
+  height: 100%;
+  border-right: 2px solid currentColor;
+  border-bottom: 2px solid currentColor;
+}
+.rbac-role[open] > summary .rbac-role-caret {
+  transform: rotate(45deg);
+}
 .rbac-role-head::-webkit-details-marker {
   display: none;
 }
 .rbac-role-name {
+  flex: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
   font-weight: 500;
 }
 .rbac-role.is-new .rbac-role-name {
@@ -41,6 +65,9 @@
 }
 .rbac-role-marks {
   display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  max-width: 55%;
   gap: 6px;
   margin-left: auto;
 }
@@ -155,6 +182,7 @@
   opacity: 1;
 }
 @media (prefers-reduced-motion: reduce) {
+  .rbac-role-caret,
   .rbac-permission input[role="switch"],
   .rbac-permission input[role="switch"]::before {
     transition: none;
