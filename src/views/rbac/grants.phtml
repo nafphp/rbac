@@ -90,6 +90,7 @@ $rolesFor = static fn(string $type): array
                                 <label class="rbac-permission" title="<?= s($role['description']) ?>">
                                     <input
                                         type="checkbox"
+                                        role="switch"
                                         name="grants[]"
                                         value="<?= (int) $role['id'] ?>|<?= s((string) $scope) ?>"
                                         <?= isset($held[$scope][$role['id']]) ? 'checked' : '' ?>

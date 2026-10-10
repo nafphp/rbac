@@ -99,6 +99,7 @@ $orphansOf = static function (array $role) use ($rbac): array {
                                 <label class="rbac-permission" title="<?= s(t($permission->getDescription())) ?>">
                                     <input
                                         type="checkbox"
+                                        role="switch"
                                         name="permissions[]"
                                         value="<?= s($name) ?>"
                                         <?= in_array($name, $role['permissions'], true) ? 'checked' : '' ?>
@@ -171,6 +172,7 @@ $orphansOf = static function (array $role) use ($rbac): array {
                             <label class="rbac-permission" title="<?= s(t($permission->getDescription())) ?>">
                                 <input
                                     type="checkbox"
+                                    role="switch"
                                     name="permissions[]"
                                     value="<?= s($name) ?>"
                                     <?= in_array($name, $mine, true) ? '' : 'disabled' ?>
