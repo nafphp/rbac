@@ -63,6 +63,7 @@ $orphansOf = static function (array $role) use ($rbac): array {
                         <?= s(t(':count Personen', ['count' => $role['holders']])) ?>
                     </span>
                 </span>
+                <span class="rbac-role-caret" aria-hidden="true"></span>
             </summary>
 
             <form class="rbac-form" method="post" data-enhanced action="<?= s(route('rbac.roles.save')) ?>">
@@ -99,6 +100,7 @@ $orphansOf = static function (array $role) use ($rbac): array {
                                 <label class="rbac-permission" title="<?= s(t($permission->getDescription())) ?>">
                                     <input
                                         type="checkbox"
+                                        role="switch"
                                         name="permissions[]"
                                         value="<?= s($name) ?>"
                                         <?= in_array($name, $role['permissions'], true) ? 'checked' : '' ?>
@@ -152,6 +154,7 @@ $orphansOf = static function (array $role) use ($rbac): array {
         <details class="rbac-role is-new">
             <summary class="rbac-role-head">
                 <span class="rbac-role-name"><?= s(t('Neue Rolle')) ?></span>
+                <span class="rbac-role-caret" aria-hidden="true"></span>
             </summary>
             <form class="rbac-form" method="post" data-enhanced action="<?= s(route('rbac.roles.save')) ?>">
                 <input type="hidden" name="_csrf" value="<?= s($token) ?>" />
@@ -171,6 +174,7 @@ $orphansOf = static function (array $role) use ($rbac): array {
                             <label class="rbac-permission" title="<?= s(t($permission->getDescription())) ?>">
                                 <input
                                     type="checkbox"
+                                    role="switch"
                                     name="permissions[]"
                                     value="<?= s($name) ?>"
                                     <?= in_array($name, $mine, true) ? '' : 'disabled' ?>
