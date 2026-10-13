@@ -127,3 +127,8 @@ separate from boot order. No host `plugins.php` entry is needed.
 For MySQL acceptance, set `NAF_RBAC_MYSQL_DSN`, `NAF_RBAC_MYSQL_USER` and
 `NAF_RBAC_MYSQL_PASSWORD`. The integration test refuses any schema other than
 `nafinity_rbac_test` and removes its tables after the run.
+
+Browser controls have a separate development-only regression suite: run `npm ci`,
+`npx playwright install chromium` and `npm test` with Node 22+. CI checks keyboard
+disclosure/switch behavior, reduced-motion transitions and forced-color fallback
+against the shipped stylesheet. Keep these accessibility contracts when editing CSS.

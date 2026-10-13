@@ -183,7 +183,7 @@
 }
 @media (prefers-reduced-motion: reduce) {
   .rbac-role-caret,
-  .rbac-permission input[role="switch"],
+  .rbac-permission input[type="checkbox"][role="switch"],
   .rbac-permission input[role="switch"]::before {
     transition: none;
   }
