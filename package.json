@@ -1,0 +1,14 @@
+{
+  "name": "@nafphp/rbac-tests",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "test": "node --test tests/Browser/*.test.js"
+  },
+  "devDependencies": {
+    "playwright": "1.64.0"
+  }
+}
